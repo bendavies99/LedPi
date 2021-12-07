@@ -1,0 +1,11 @@
+plugins {
+    id 'java-library'
+}
+
+configurations {
+    implementation.extendsFrom(sharedLibs)
+    annotationProcessor.extendsFrom(sharedAnnProc)
+}
+
+dependencies {
+}

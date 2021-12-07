@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+}
+
+group 'net.bdavies'
+
+allprojects {
+
+    repositories {
+        mavenCentral()
+    }
+
+    tasks.withType(JavaCompile) {
+        options.encoding('UTF-8');
+        options.incremental(true);
+        sourceCompatibility(JavaVersion.VERSION_11.toString());
+        targetCompatibility(JavaVersion.VERSION_11.toString());
+    }
+}
+
+subprojects {
+    configurations {
+        sharedLibs
+        sharedAnnProc
+    }
+    dependencies {
+        sharedLibs 'com.google.code.gson:gson:2.8.9'
+        sharedLibs 'org.projectlombok:lombok:1.18.22'
+        sharedLibs 'org.slf4j:slf4j-api:1.7.32'
+        sharedLibs 'ch.qos.logback:logback-classic:1.2.7'
+        sharedLibs 'org.fusesource.jansi:jansi:2.4.0'
+        sharedLibs 'io.projectreactor:reactor-core:3.4.12'
+        sharedAnnProc 'org.projectlombok:lombok:1.18.22'
+    }
+}

@@ -1,0 +1,15 @@
+{
+  "applicationConfig": {
+    "applicationName": "Test",
+    "debugMode": false
+  },
+  "networkConfig": {
+    "reactivePort": 25543,
+    "mqtt": {
+      "host": "127.0.0.1"
+    }
+  },
+  "stripConfigurations": [
+    { "name": "TestLed", "pinNumber": 18, "ledCount": 180, "uid": "0x21" }
+  ]
+}

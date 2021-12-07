@@ -1,0 +1,13 @@
+plugins {
+    id 'java-library'
+}
+
+configurations {
+    implementation.extendsFrom(sharedLibs)
+    annotationProcessor.extendsFrom(sharedAnnProc)
+}
+
+dependencies {
+    implementation(project(':api'))
+    implementation('org.reflections:reflections:0.10.2')
+}

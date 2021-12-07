@@ -1,0 +1,6 @@
+rootProject.name = 'LedPi'
+include 'app'
+include 'api'
+include 'reactive'
+include 'effects'
+include 'display'

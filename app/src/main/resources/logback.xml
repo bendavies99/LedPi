@@ -1,0 +1,75 @@
+<configuration>
+    <conversionRule conversionWord="animsg" converterClass="net.bdavies.app.logging.AnsiMessageConverter" />
+    <conversionRule conversionWord="stripansimsg" converterClass="net.bdavies.app.logging.StripAnsiMessageConverter" />
+    <conversionRule conversionWord="res" converterClass="net.bdavies.app.logging.ResourcesConverter" />
+<!--    <shutdownHook/>-->
+    <appender name="STDOUT" class="net.bdavies.app.logging.AnsiConsoleAppender">
+        <withJansi>true</withJansi>
+        <filter class="net.bdavies.app.logging.LoggingFilter" />
+        <encoder>
+            <pattern>%magenta(%d{HH:mm:ss.SSS}) %blue([%.15thread]) %highlight(%-5level) %cyan(%logger{15}) - %animsg%n</pattern>
+        </encoder>
+    </appender>
+    <appender name="ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/app.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/archive/app-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>15</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{15} - %stripansimsg%n</pattern>
+        </encoder>
+    </appender>
+    <appender name="ROLLING-ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/app-err.log</file>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/archive/app-err-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>15</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{15} - %stripansimsg%n</pattern>
+        </encoder>
+    </appender>
+    <appender name="ROLLING-WARN" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/app-warn.log</file>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>WARN</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/archive/app-warn-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>15</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{15} - %stripansimsg%n</pattern>
+        </encoder>
+    </appender>
+    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <maxFlushTime>0</maxFlushTime>
+        <appender-ref ref="ROLLING" />
+    </appender>
+    <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+        <maxFlushTime>100</maxFlushTime>
+        <appender-ref ref="STDOUT" />
+    </appender>
+    <logger name="reactor" level="TRACE"/>
+    <logger name="reactor.netty" level="INFO"/>
+    <logger name="io.netty" level="WARN"/>
+
+    <root level="DEBUG">
+        <appender-ref ref="ASYNC_CONSOLE" />
+        <appender-ref ref="ASYNC" />
+        <appender-ref ref="ROLLING-ERROR" />
+        <appender-ref ref="ROLLING-WARN" />
+    </root>
+</configuration>

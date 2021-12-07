@@ -1,0 +1,27 @@
+plugins {
+    id 'application'
+}
+
+application {
+    getMainClass().set('net.bdavies.app.Application')
+    applicationName('LedPi')
+}
+
+run {
+    systemProperty('lp.prod', false)
+    systemProperty('lp.trace', true)
+    systemProperty('lp.debugDisplay', true)
+}
+
+configurations {
+    implementation.extendsFrom(sharedLibs)
+    annotationProcessor.extendsFrom(sharedAnnProc)
+}
+
+dependencies {
+    implementation project(':api')
+    implementation project(':effects')
+    runtimeOnly project(':display')
+    implementation project(':reactive')
+    implementation "com.github.mbelling:rpi-ws281x-java:2.0.0"
+}
