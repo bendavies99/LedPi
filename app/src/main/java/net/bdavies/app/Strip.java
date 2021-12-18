@@ -99,7 +99,7 @@ public abstract class Strip implements IStrip
 	 * @param col   color A(24-32bit)(no effect) R(16-24bit) G(8-16bit) B(0-8bit)
 	 */
 	@Override
-	public void setColorAtPixel(int index, int col)
+	public synchronized void setColorAtPixel(int index, int col)
 	{
 		colors[index] = col;
 		renderQueue.offer(this::render);
@@ -111,7 +111,7 @@ public abstract class Strip implements IStrip
 	 * @param colors a list of colors
 	 */
 	@Override
-	public void setStripColors(List<Integer> colors)
+	public synchronized void setStripColors(List<Integer> colors)
 	{
 		this.colors = colors.stream().mapToInt(Integer::intValue).toArray();
 		renderQueue.offer(this::render);
@@ -123,7 +123,7 @@ public abstract class Strip implements IStrip
 	 * @param colors a list of colors
 	 */
 	@Override
-	public void setStripColors(int[] colors)
+	public synchronized void setStripColors(int[] colors)
 	{
 		if (colors.length != pixelCount) {
 			colors = Arrays.copyOf(colors, pixelCount);
@@ -138,7 +138,7 @@ public abstract class Strip implements IStrip
 	 *
 	 * @param call The render call to process
 	 */
-	protected void handleRenderCall(RenderCall call)
+	protected synchronized void handleRenderCall(RenderCall call)
 	{
 		val scs = call.getPixelData();
 		int[] colors = call.isBlankSlate() ? new int[pixelCount] : Arrays.copyOf(this.colors, pixelCount);
