@@ -59,13 +59,14 @@ public class Application implements IApplication
 	@SneakyThrows
 	private Application()
 	{
-		Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown)); //Handle Force Shutdown
-		Signal.handle(new Signal("INT"), sig -> this.shutdown()); //Handle SIGINT
 		File f = new File("config.json");
 		if (!f.exists()) {
 			log.error("Please create a config file called config.json");
 			System.exit(-1);
 		}
+
+		Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown)); //Handle Force Shutdown
+		Signal.handle(new Signal("INT"), sig -> this.shutdown()); //Handle SIGINT
 		config = new GsonBuilder().create().fromJson(new FileReader(f), Config.class);
 		log.trace("Starting the application");
 

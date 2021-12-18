@@ -6,8 +6,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
@@ -45,6 +44,8 @@ public abstract class Strip implements IStrip
 	private int brightness = STARTING_BRIGHTNESS;
 	private int savedBrightness = STARTING_BRIGHTNESS;
 	private final ExecutorService service = Executors.newCachedThreadPool();
+	private final BlockingQueue<Runnable> renderQueue = new LinkedBlockingQueue<>();
+	private final ThreadPoolExecutor renderThreadPool;
 	private Disposable currentEffectDs = null;
 	private final int uId;
 	private StripMode mode = StripMode.EFFECTS;
@@ -71,9 +72,12 @@ public abstract class Strip implements IStrip
 		this.pixelCount = pixelCount;
 		this.colors = new int[pixelCount];
 		this.uId = uId;
+		renderThreadPool = new ThreadPoolExecutor(1, 10, 30, TimeUnit.SECONDS,
+				renderQueue);
+		renderThreadPool.prestartAllCoreThreads();
 		Arrays.fill(this.colors, 0xFF000000);
 		setEffect(Connecting.class);
-		render();
+		renderQueue.offer(this::render);
 	}
 
 	/**
@@ -98,7 +102,7 @@ public abstract class Strip implements IStrip
 	public void setColorAtPixel(int index, int col)
 	{
 		colors[index] = col;
-		render();
+		renderQueue.offer(this::render);
 	}
 
 	/**
@@ -110,7 +114,7 @@ public abstract class Strip implements IStrip
 	public void setStripColors(List<Integer> colors)
 	{
 		this.colors = colors.stream().mapToInt(Integer::intValue).toArray();
-		render();
+		renderQueue.offer(this::render);
 	}
 
 	/**
@@ -125,7 +129,7 @@ public abstract class Strip implements IStrip
 			colors = Arrays.copyOf(colors, pixelCount);
 		}
 		this.colors = colors;
-		render();
+		renderQueue.offer(this::render);
 	}
 
 	/**
@@ -402,7 +406,7 @@ public abstract class Strip implements IStrip
 							bChange.set(brightness);
 					}
 					this.brightness = bChange.get();
-					render();
+					renderQueue.offer(this::render);
 					try
 					{
 						//noinspection BusyWait
@@ -468,6 +472,7 @@ public abstract class Strip implements IStrip
 		setColors(cols);
 		off();
 		service.shutdown();
+		renderThreadPool.shutdown();
 	}
 
 	/**

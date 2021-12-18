@@ -1,6 +1,7 @@
 package net.bdavies.app.strip;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.github.mbelling.ws281x.Color;
 import com.github.mbelling.ws281x.LedStripType;
@@ -20,7 +21,7 @@ import net.bdavies.app.Strip;
 @Slf4j
 public class NativeStrip extends Strip
 {
-	private Ws281xLedStrip strip;
+	private final AtomicReference<Ws281xLedStrip> strip = new AtomicReference<>(null);
 	private int[] previousRender;
 	private int previousBrightness = 255;
 	private static int DMA_CHANNEL = 10;
@@ -35,9 +36,9 @@ public class NativeStrip extends Strip
 		super(config.getName(), config.getLedCount(), config.getUid());
 		try
 		{
-			strip = new Ws281xLedStrip(getPixelCount(), config.getPinNumber(), 800000, DMA_CHANNEL,
+			strip.set(new Ws281xLedStrip(getPixelCount(), config.getPinNumber(), 800000, DMA_CHANNEL,
 					getBrightness(), getPwmChannel(config.getPinNumber()), false,
-					LedStripType.WS2811_STRIP_GRB, true);
+					LedStripType.WS2811_STRIP_GRB, true));
 			DMA_CHANNEL++;
 			if (DMA_CHANNEL > 14) DMA_CHANNEL = 14;
 			log.info("Setup a native strip on pin: {}", config.getPinNumber());
@@ -62,29 +63,31 @@ public class NativeStrip extends Strip
 	 * Render the colors to the native strip back-end
 	 */
 	@Override
-	public void render()
+	public synchronized void render()
 	{
-		if (previousRender == null) {
-			previousRender = new int[getPixelCount()];
-			Arrays.fill(previousRender, 0x00FF00FF);
-		}
-		if (strip != null)
-		{
-			for (int i = 0; i < getPixelCount(); i++)
+		synchronized (strip) {
+			if (previousRender == null) {
+				previousRender = new int[getPixelCount()];
+				Arrays.fill(previousRender, 0x00FF00FF);
+			}
+			if (strip.get() != null)
 			{
-				if (getColorAtPixel(i) != previousRender[i])
+				for (int i = 0; i < getPixelCount(); i++)
 				{
-					strip.setPixel(i, new Color(getColorAtPixel(i)));
+					if (getColorAtPixel(i) != previousRender[i])
+					{
+						strip.get().setPixel(i, new Color(getColorAtPixel(i)));
+					}
 				}
+				if (previousBrightness != getBrightness())
+				{
+					strip.get().setBrightness(getBrightness());
+				}
+				strip.get().render();
 			}
-			if (previousBrightness != getBrightness())
-			{
-				strip.setBrightness(getBrightness());
-			}
-			strip.render();
-		}
 
-		previousRender = Arrays.copyOf(getColors(), getPixelCount());
-		previousBrightness = getBrightness();
+			previousRender = Arrays.copyOf(getColors(), getPixelCount());
+			previousBrightness = getBrightness();
+		}
 	}
 }
