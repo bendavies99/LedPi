@@ -2,6 +2,7 @@ package net.bdavies.fx.internal;
 
 import static net.bdavies.api.util.TimingUtils.setTimeout;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -49,6 +50,7 @@ public class Connecting extends BaseEffect
         int maxCount = pixelCount / space;
         setupRenderer(50, () -> {
             int[] colors = new int[pixelCount];
+            Arrays.fill(colors, 0xFF000000);
             for (int i = 0; i < colors.length; i+=space)
             {
                 int count = i / space;
@@ -60,7 +62,7 @@ public class Connecting extends BaseEffect
                 }
                 colors[i + 1] = 0xFF000000;
             }
-            sendRenderData(generateRenderCall(colors));
+            sendRenderData(generateRenderCall(colors, false, true));
             counter.getAndIncrement();
             if (counter.get() >= maxCount) {
                 counter.set(0);

@@ -3,7 +3,10 @@ package net.bdavies.app.strip;
 import com.github.mbelling.ws281x.Color;
 import com.github.mbelling.ws281x.LedStripType;
 import com.github.mbelling.ws281x.Ws281xLedStrip;
+import com.google.common.util.concurrent.RateLimiter;
+
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import net.bdavies.api.config.IStripConfig;
 import net.bdavies.app.Strip;
 
@@ -25,6 +28,7 @@ public class NativeStrip extends Strip {
     private final AtomicBoolean isRendering = new AtomicBoolean(false);
     private int[] previousRender;
     private int previousBrightness = 255;
+    private final RateLimiter rateLimiter = RateLimiter.create(15);
 
     /**
      * Construct a native Strip
@@ -66,6 +70,9 @@ public class NativeStrip extends Strip {
         if (isRendering == null) return;
         if (isRendering.get()) return;
         isRendering.set(true);
+        //Restrict the strip to no more than 15 render calls per second
+        val waited = rateLimiter.acquire();
+        log.info("Waited: {}", waited);
         synchronized (this) {
             if (previousRender == null) {
                 previousRender = new int[getPixelCount()];
@@ -77,15 +84,16 @@ public class NativeStrip extends Strip {
                     if (colors[i] != previousRender[i]) {
                         changed = true;
                         strip.get().setPixel(i, new Color(colors[i]));
+                        strip.get().render();
                     }
                 }
                 if (previousBrightness != getBrightness()) {
                     changed = true;
                     strip.get().setBrightness(getBrightness());
+                    strip.get().render();
                 }
 
                 if (changed) {
-                    strip.get().render();
                     previousRender = Arrays.copyOf(colors, colors.length);
                     previousBrightness = getBrightness();
                 }

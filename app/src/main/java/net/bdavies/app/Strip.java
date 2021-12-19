@@ -73,7 +73,6 @@ public abstract class Strip implements IStrip
 		this.uId = uId;
 		Arrays.fill(this.colors, 0xFF000000);
 		setEffect(Connecting.class);
-		render();
 	}
 
 	/**

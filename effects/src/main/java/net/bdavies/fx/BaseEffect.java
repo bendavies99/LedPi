@@ -9,6 +9,7 @@ import net.bdavies.api.effects.RenderCall;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Schedulers;
 
 import java.awt.*;
 import java.time.Duration;
@@ -98,6 +99,7 @@ public abstract class BaseEffect implements IEffect
      * @return The made render call
      */
     protected final RenderCall generateRenderCall(int[] color, boolean blend, boolean blankSlate) {
+        color = Arrays.copyOf(color, color.length);
         previousRender = color;
         return new RenderCall(blend, blankSlate, color.length, color);
     }
@@ -138,7 +140,8 @@ public abstract class BaseEffect implements IEffect
         if (renderer != null) {
             renderer.dispose();
         }
-        renderer = Flux.interval(Duration.ofMillis(delay)).subscribe(l -> run.accept(previousRender));
+        renderer = Flux.interval(Duration.ofMillis(delay)).subscribeOn(Schedulers.immediate())
+            .subscribe(l -> run.accept(previousRender));
     }
 
     /**

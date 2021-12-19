@@ -1,6 +1,9 @@
 package net.bdavies.app.strip;
 
+import com.google.common.util.concurrent.RateLimiter;
+
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import net.bdavies.app.Strip;
 import net.bdavies.network.RemoteStripServer;
 
@@ -13,6 +16,8 @@ import net.bdavies.network.RemoteStripServer;
 public class DebugStrip extends Strip
 {
 	private RemoteStripServer stripServer;
+
+	private final RateLimiter rateLimiter = RateLimiter.create(15);
 
 
 	/**
@@ -36,6 +41,11 @@ public class DebugStrip extends Strip
 	 */
 	@Override
 	public void render(int[] colors) {
+		val waited = rateLimiter.acquire();
+		if (waited > 0.0)
+		{
+			log.info("Waited: {}", waited);
+		}
 		if (stripServer != null) {
 			stripServer.sendRenderData(getUID(), colors);
 		}
