@@ -1,15 +1,5 @@
 package net.bdavies.app;
 
-import static reactor.core.publisher.Sinks.EmitFailureHandler.FAIL_FAST;
-
-import java.awt.*;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +15,17 @@ import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.SignalType;
 import reactor.core.publisher.Sinks;
+
+import java.awt.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+
+import static reactor.core.publisher.Sinks.EmitFailureHandler.FAIL_FAST;
 
 /**
  * The base LED Strip class to be extended by the different type of strip based on the
@@ -44,8 +45,6 @@ public abstract class Strip implements IStrip
 	private int brightness = STARTING_BRIGHTNESS;
 	private int savedBrightness = STARTING_BRIGHTNESS;
 	private final ExecutorService service = Executors.newCachedThreadPool();
-	private final BlockingQueue<Runnable> renderQueue = new LinkedBlockingQueue<>();
-	private final ThreadPoolExecutor renderThreadPool;
 	private Disposable currentEffectDs = null;
 	private final int uId;
 	private StripMode mode = StripMode.EFFECTS;
@@ -72,12 +71,9 @@ public abstract class Strip implements IStrip
 		this.pixelCount = pixelCount;
 		this.colors = new int[pixelCount];
 		this.uId = uId;
-		renderThreadPool = new ThreadPoolExecutor(1, 10, 30, TimeUnit.SECONDS,
-				renderQueue);
-		renderThreadPool.prestartAllCoreThreads();
 		Arrays.fill(this.colors, 0xFF000000);
 		setEffect(Connecting.class);
-		renderQueue.offer(this::render);
+		render();
 	}
 
 	/**
@@ -87,8 +83,7 @@ public abstract class Strip implements IStrip
 	 * @return color A(24-32bit)(no effect) R(16-24bit) G(8-16bit) B(0-8bit)
 	 */
 	@Override
-	public int getColorAtPixel(int index)
-	{
+	public synchronized int getColorAtPixel(int index) {
 		return colors[index];
 	}
 
@@ -99,10 +94,9 @@ public abstract class Strip implements IStrip
 	 * @param col   color A(24-32bit)(no effect) R(16-24bit) G(8-16bit) B(0-8bit)
 	 */
 	@Override
-	public synchronized void setColorAtPixel(int index, int col)
-	{
+	public synchronized void setColorAtPixel(int index, int col) {
 		colors[index] = col;
-		renderQueue.offer(this::render);
+		render();
 	}
 
 	/**
@@ -111,10 +105,9 @@ public abstract class Strip implements IStrip
 	 * @param colors a list of colors
 	 */
 	@Override
-	public synchronized void setStripColors(List<Integer> colors)
-	{
+	public synchronized void setStripColors(List<Integer> colors) {
 		this.colors = colors.stream().mapToInt(Integer::intValue).toArray();
-		renderQueue.offer(this::render);
+		render();
 	}
 
 	/**
@@ -129,7 +122,7 @@ public abstract class Strip implements IStrip
 			colors = Arrays.copyOf(colors, pixelCount);
 		}
 		this.colors = colors;
-		renderQueue.offer(this::render);
+		render();
 	}
 
 	/**
@@ -138,27 +131,15 @@ public abstract class Strip implements IStrip
 	 *
 	 * @param call The render call to process
 	 */
-	protected synchronized void handleRenderCall(RenderCall call)
-	{
-		val scs = call.getPixelData();
+	protected synchronized void handleRenderCall(RenderCall call) {
 		int[] colors = call.isBlankSlate() ? new int[pixelCount] : Arrays.copyOf(this.colors, pixelCount);
-		for (int i = 0; i < call.getPixelCount(); i++)
-		{
-			int currIdx = i * 3;
-			int pixel = scs[currIdx];
-			short r = (short) (((scs[currIdx + 1] & 0xFFFF) >> 8) & 0xFF);
-			short g = (short) (((scs[currIdx + 1] & 0xFFFF)) & 0xFF);
-			colors[pixel] = ((byte) 0xFF & 0xFF << 24) | (r << 16) | (g << 8) | ((byte) scs[currIdx + 2] & 0xFF);
-		}
-		if (call.getPixelCount() == pixelCount)
-		{
+		if (call.getPixelCount() >= 0) System.arraycopy(call.getPixelData(), 0, colors, 0, call.getPixelCount());
+		if (call.getPixelCount() == pixelCount) {
 			boolean allTheSame = Arrays.stream(colors).allMatch(s -> s == colors[0]);
-			if (allTheSame && call.isBlend())
-			{
+			if (allTheSame && call.isBlend()) {
 				//Blend the colour
 				blendStripColor(colors[0]);
-			}
-			else
+			} else
 			{
 				setStripColors(colors);
 			}
@@ -293,8 +274,7 @@ public abstract class Strip implements IStrip
 			currentEffectDs = null;
 		}
 		currentEffect = constructor.newInstance(pixelCount);
-		if (brightness > 0)
-		{
+		if (brightness > 0) {
 			turnOnEffect();
 		}
 	}
@@ -302,8 +282,17 @@ public abstract class Strip implements IStrip
 	/**
 	 * Render the strip to a source
 	 */
+	public abstract void render(int[] colors);
+
+	/**
+	 * Render the strip to a source
+	 */
 	@Override
-	public abstract void render();
+	public synchronized void render() {
+		synchronized (this) {
+			this.render(Arrays.copyOf(colors, colors.length));
+		}
+	}
 
 	/**
 	 * Turn the LED Strip off
@@ -406,7 +395,7 @@ public abstract class Strip implements IStrip
 							bChange.set(brightness);
 					}
 					this.brightness = bChange.get();
-					renderQueue.offer(this::render);
+					render();
 					try
 					{
 						//noinspection BusyWait
@@ -472,7 +461,6 @@ public abstract class Strip implements IStrip
 		setColors(cols);
 		off();
 		service.shutdown();
-		renderThreadPool.shutdown();
 	}
 
 	/**

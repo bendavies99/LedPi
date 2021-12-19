@@ -8,6 +8,7 @@ allprojects {
 
     repositories {
         mavenCentral()
+        mavenLocal()
     }
 
     tasks.withType(JavaCompile) {

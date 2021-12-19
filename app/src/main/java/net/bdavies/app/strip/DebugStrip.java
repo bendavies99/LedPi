@@ -35,10 +35,9 @@ public class DebugStrip extends Strip
 	 * Render the strip colours
 	 */
 	@Override
-	public void render()
-	{
+	public void render(int[] colors) {
 		if (stripServer != null) {
-			stripServer.sendRenderData(getUID(), getColors());
+			stripServer.sendRenderData(getUID(), colors);
 		}
 	}
 

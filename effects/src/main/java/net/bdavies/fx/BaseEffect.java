@@ -1,12 +1,5 @@
 package net.bdavies.fx;
 
-import java.awt.*;
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Consumer;
-
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -16,6 +9,13 @@ import net.bdavies.api.effects.RenderCall;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
+
+import java.awt.*;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * The base effect class that all the effects extend from
@@ -98,20 +98,8 @@ public abstract class BaseEffect implements IEffect
      * @return The made render call
      */
     protected final RenderCall generateRenderCall(int[] color, boolean blend, boolean blankSlate) {
-        short[] pixels = new short[color.length * 3];
-        for (int i = 0; i < color.length; i++) {
-            int currIdx = i * 3;
-            pixels[currIdx] = (short)i;
-            val r = (color[i] >> 16) & 0xFF;
-            val g = (color[i] >> 8) & 0xFF;
-            val b = (short) (color[i]) & 0xFF;
-            pixels[currIdx + 1] = (short) (((r & 0xFF) << 8) | (g & 0xFF));
-            pixels[currIdx + 2] = (short) ((short) b & 0xFF);
-        }
-
         previousRender = color;
-
-        return new RenderCall(blend, blankSlate, color.length, pixels);
+        return new RenderCall(blend, blankSlate, color.length, color);
     }
 
     /**

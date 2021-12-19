@@ -10,7 +10,7 @@ application {
 run {
     systemProperty('lp.prod', false)
     systemProperty('lp.trace', true)
-    systemProperty('lp.debugDisplay', true)
+    systemProperty('lp.debugDisplay', false)
 }
 
 configurations {
@@ -23,5 +23,5 @@ dependencies {
     implementation project(':effects')
     runtimeOnly project(':display')
     implementation project(':reactive')
-    implementation "com.github.mbelling:rpi-ws281x-java:2.0.0"
+    implementation "com.github.mbelling:rpi-ws281x-java:LedPi"
 }

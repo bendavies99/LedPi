@@ -1,23 +1,8 @@
 package net.bdavies.app;
 
-import static net.bdavies.api.util.TimingUtils.setTimeout;
-
-import java.io.File;
-import java.io.FileReader;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import org.fusesource.jansi.Ansi;
-import org.slf4j.LoggerFactory;
-
-import com.google.gson.GsonBuilder;
-
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import com.google.gson.GsonBuilder;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -35,9 +20,19 @@ import net.bdavies.fx.EffectRegistry;
 import net.bdavies.network.MQTTClient;
 import net.bdavies.network.PacketReceiver;
 import net.bdavies.network.RemoteStripServer;
-import reactor.core.Disposable;
-import reactor.core.publisher.Flux;
+import org.fusesource.jansi.Ansi;
+import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
+
+import java.io.File;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import static net.bdavies.api.util.TimingUtils.setTimeout;
 
 /**
  * Main Application class for LedPi
@@ -48,7 +43,7 @@ import sun.misc.Signal;
 public class Application implements IApplication
 {
 	private final List<IStrip> strips = new ArrayList<>();
-	private final Disposable gcDisposable;
+	//	private final Disposable gcDisposable;
 	private final ExecutorService service = Executors.newCachedThreadPool();
 	private final PacketReceiver packetReceiver;
 	private final MQTTClient client;
@@ -80,7 +75,7 @@ public class Application implements IApplication
 		Arrays.stream(config.getStripConfigurations()).forEach(sc ->
 				strips.add(StripFactory.makeStrip(sc, stripServer)));
 
-		gcDisposable = Flux.interval(Duration.ofSeconds(10)).subscribe(l -> System.gc());
+//		gcDisposable = Flux.interval(Duration.ofSeconds(10)).subscribe(l -> System.gc());
 
 		log.trace("Setting up UDP Server");
 		packetReceiver = new PacketReceiver(config.getNetworkConfig().getReactivePort());
@@ -161,7 +156,7 @@ public class Application implements IApplication
 		}, 3500);
 		packetReceiver.dispose();
 		strips.forEach(IStrip::dispose);
-		gcDisposable.dispose();
+//		gcDisposable.dispose();
 		log.info("System will shutdown in 3 seconds...");
 	}
 

@@ -15,7 +15,7 @@ public class RenderCall
 	private final boolean blend;
 	private final boolean blankSlate;
 	private final int pixelCount;
-	private final short[] pixelData;
+	private final int[] pixelData;
 	//Short (this method drops memory usage by 4x)
 	//[0] -> PixelIndex (0-16bits)
 	//[1] -> Red (0-8bits), Green(8-16 bits)
