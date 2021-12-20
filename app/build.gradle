@@ -24,6 +24,6 @@ dependencies {
     implementation project(':effects')
     implementation project(':display')
     implementation project(':reactive')
-    implementation "com.github.mbelling:rpi-ws281x-java:2.0.0"
+    implementation "com.github.mbelling:rpi-ws281x-java:LedPi"
     implementation("com.google.guava:guava:31.0.1-jre")
 }

@@ -47,9 +47,8 @@ public abstract class BaseEffect implements IEffect
      *
      * @param call The call to send
      */
-    protected synchronized final void sendRenderData(RenderCall call) {
-        if (sink.currentSubscriberCount() > 0)
-        {
+    protected final void sendRenderData(RenderCall call) {
+        if (sink.currentSubscriberCount() > 0) {
             sink.emitNext(call, Sinks.EmitFailureHandler.FAIL_FAST);
         }
     }

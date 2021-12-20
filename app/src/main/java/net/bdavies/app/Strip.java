@@ -82,7 +82,7 @@ public abstract class Strip implements IStrip
 	 * @return color A(24-32bit)(no effect) R(16-24bit) G(8-16bit) B(0-8bit)
 	 */
 	@Override
-	public synchronized int getColorAtPixel(int index) {
+	public int getColorAtPixel(int index) {
 		return colors[index];
 	}
 
@@ -93,7 +93,7 @@ public abstract class Strip implements IStrip
 	 * @param col   color A(24-32bit)(no effect) R(16-24bit) G(8-16bit) B(0-8bit)
 	 */
 	@Override
-	public synchronized void setColorAtPixel(int index, int col) {
+	public void setColorAtPixel(int index, int col) {
 		colors[index] = col;
 		render();
 	}
@@ -104,7 +104,7 @@ public abstract class Strip implements IStrip
 	 * @param colors a list of colors
 	 */
 	@Override
-	public synchronized void setStripColors(List<Integer> colors) {
+	public void setStripColors(List<Integer> colors) {
 		this.colors = colors.stream().mapToInt(Integer::intValue).toArray();
 		render();
 	}
@@ -115,8 +115,7 @@ public abstract class Strip implements IStrip
 	 * @param colors a list of colors
 	 */
 	@Override
-	public synchronized void setStripColors(int[] colors)
-	{
+	public void setStripColors(int[] colors) {
 		if (colors.length != pixelCount) {
 			colors = Arrays.copyOf(colors, pixelCount);
 		}
@@ -130,8 +129,11 @@ public abstract class Strip implements IStrip
 	 *
 	 * @param call The render call to process
 	 */
-	protected synchronized void handleRenderCall(RenderCall call) {
+	protected void handleRenderCall(RenderCall call) {
 		int[] colors = call.isBlankSlate() ? new int[pixelCount] : Arrays.copyOf(this.colors, pixelCount);
+		if (call.isBlankSlate()) {
+			Arrays.fill(colors, Color.BLACK.getRGB());
+		}
 		if (call.getPixelCount() >= 0) System.arraycopy(call.getPixelData(), 0, colors, 0, call.getPixelCount());
 		if (call.getPixelCount() == pixelCount) {
 			boolean allTheSame = Arrays.stream(colors).allMatch(s -> s == colors[0]);
@@ -253,8 +255,7 @@ public abstract class Strip implements IStrip
 	 * @return the effect object
 	 */
 	@Override
-	public IEffect getEffect()
-	{
+	public IEffect getEffect() {
 		return currentEffect;
 	}
 
@@ -264,8 +265,7 @@ public abstract class Strip implements IStrip
 	 * @param effect The effect class
 	 */
 	@SneakyThrows
-	protected synchronized final void setupEffect(Class<? extends IEffect> effect)
-	{
+	protected final void setupEffect(Class<? extends IEffect> effect) {
 		if (effect == null) return;
 		val constructor = effect.getConstructor(int.class);
 		if (currentEffectDs != null && !currentEffectDs.isDisposed()) {
@@ -287,10 +287,8 @@ public abstract class Strip implements IStrip
 	 * Render the strip to a source
 	 */
 	@Override
-	public synchronized void render() {
-		synchronized (this) {
-			this.render(Arrays.copyOf(colors, colors.length));
-		}
+	public void render() {
+		render(Arrays.copyOf(colors, colors.length));
 	}
 
 	/**

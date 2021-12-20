@@ -152,8 +152,10 @@ public class Application implements IApplication
 			if (stripServer != null) {
 				stripServer.dispose();
 			}
-			System.exit(0);
 		}, 3500);
+		setTimeout(() -> {
+			System.exit(0);
+		}, 4000);
 		packetReceiver.dispose();
 		strips.forEach(IStrip::dispose);
 //		gcDisposable.dispose();
