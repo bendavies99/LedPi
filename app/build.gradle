@@ -11,6 +11,7 @@ run {
     systemProperty('lp.prod', false)
     systemProperty('lp.trace', true)
     systemProperty('lp.debugDisplay', true)
+    systemProperty('lp.oldDisplay', true)
 }
 
 configurations {
@@ -21,7 +22,7 @@ configurations {
 dependencies {
     implementation project(':api')
     implementation project(':effects')
-    runtimeOnly project(':display')
+    implementation project(':display')
     implementation project(':reactive')
     implementation "com.github.mbelling:rpi-ws281x-java:2.0.0"
     implementation("com.google.guava:guava:31.0.1-jre")

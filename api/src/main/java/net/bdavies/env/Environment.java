@@ -22,4 +22,9 @@ public class Environment
      * Will turn on the debug display that will render the strip
      */
     public static final boolean isDebugDisplayEnabled = Boolean.parseBoolean(System.getProperty("lp.debugDisplay"));
+
+    /**
+     * Will use the old style of JFrame to render the strip to see if any artifacts are present
+     */
+    public static final boolean isOldDisplayEnabled = Boolean.parseBoolean(System.getProperty("lp.oldDisplay"));
 }

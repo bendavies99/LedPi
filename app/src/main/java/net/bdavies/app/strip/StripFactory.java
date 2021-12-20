@@ -29,6 +29,9 @@ public class StripFactory
 			log.trace("Making a production strip using config: {}", config);
 			return new NativeStrip(config);
 		}
+		else if (Environment.isOldDisplayEnabled) {
+			return new DisplayStrip(config.getName(), config.getLedCount(), config.getUid());
+		}
 		else
 		{
 			log.trace("Making a debug strip using config: {}", config);

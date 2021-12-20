@@ -84,18 +84,17 @@ public class NativeStrip extends Strip {
                     if (colors[i] != previousRender[i]) {
                         changed = true;
                         strip.get().setPixel(i, new Color(colors[i]));
-                        strip.get().render();
                     }
                 }
                 if (previousBrightness != getBrightness()) {
                     changed = true;
                     strip.get().setBrightness(getBrightness());
-                    strip.get().render();
                 }
 
                 if (changed) {
                     previousRender = Arrays.copyOf(colors, colors.length);
                     previousBrightness = getBrightness();
+                    strip.get().render();
                 }
                 isRendering.set(false);
             }
