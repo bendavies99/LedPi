@@ -7,6 +7,7 @@ import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -22,6 +23,8 @@ import net.bdavies.network.mqtt.ConnectListener;
 public class MQTTClient
 {
 	private final IMqttAsyncClient client;
+	@Getter
+	private boolean shutdown = false;
 
 	@SneakyThrows
 	public MQTTClient(IApplication application) {
@@ -39,11 +42,12 @@ public class MQTTClient
 		options.setAutomaticReconnect(true);
 		options.setKeepAliveInterval(10);
 		options.setConnectionTimeout(5);
-		client.connect(options, this, new ConnectListener(client, options, application));
+		client.connect(options, this, new ConnectListener(client, options, application, this));
 	}
 
 	@SneakyThrows
 	public void shutdown() {
+		shutdown = true;
 		if (client.isConnected())
 		{
 			client.disconnect();

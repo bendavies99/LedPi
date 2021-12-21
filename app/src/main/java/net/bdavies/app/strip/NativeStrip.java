@@ -1,5 +1,7 @@
 package net.bdavies.app.strip;
 
+import static net.bdavies.api.util.TimingUtils.setInterval;
+
 import com.github.mbelling.ws281x.Color;
 import com.github.mbelling.ws281x.LedStripType;
 import com.github.mbelling.ws281x.Ws281xLedStrip;
@@ -10,11 +12,11 @@ import net.bdavies.app.Strip;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
-import static net.bdavies.api.util.TimingUtils.setInterval;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The main Native Strip implementation which uses the
@@ -25,14 +27,11 @@ import static net.bdavies.api.util.TimingUtils.setInterval;
  */
 @Slf4j
 public class NativeStrip extends Strip {
-    private static int DMA_CHANNEL = 10;
-    private final AtomicReference<Ws281xLedStrip> strip = new AtomicReference<>(null);
+    private static int DMA_CHANNEL = 9;
+    private volatile Ws281xLedStrip strip;
     private final AtomicBoolean isRendering = new AtomicBoolean(false);
     private int[] previousRender;
     private int previousBrightness = 255;
-    private AtomicInteger renderCalls = new AtomicInteger(0);
-    private AtomicLong timeTakenToReachLimit = new AtomicLong(System.currentTimeMillis());
-    private AtomicBoolean logged = new AtomicBoolean(false);
 
     /**
      * Construct a native Strip
@@ -44,21 +43,16 @@ public class NativeStrip extends Strip {
         try {
             DMA_CHANNEL++;
             log.info("Rendering using DMA CHAN: {}", DMA_CHANNEL);
-            strip.set(new Ws281xLedStrip(getPixelCount(), config.getPinNumber(), 800000, DMA_CHANNEL,
-                    getBrightness(), getPwmChannel(config.getPinNumber()), false,
-                    LedStripType.WS2811_STRIP_GRB, true));
+            strip = new Ws281xLedStrip(getPixelCount(), config.getPinNumber(), 800000, DMA_CHANNEL,
+                    getBrightness(), getPwmChannel(config.getPinNumber()), true,
+                    LedStripType.WS2811_STRIP_GRB, false);
             if (DMA_CHANNEL > 14) DMA_CHANNEL = 14;
             log.info("Setup a native strip on pin: {}", config.getPinNumber());
         } catch (UnsatisfiedLinkError e) {
             log.error("Strip cannot load on this machine: {} you will need to fix to continue", getName(), e);
             System.exit(-1);
         }
-
-        setInterval(() -> {
-            renderCalls.set(0);
-            logged.set(false);
-            timeTakenToReachLimit.set(System.currentTimeMillis());
-        }, 1000, 1000);
+        setInterval(() -> strip.render(), 52, 100);
     }
 
     /**
@@ -68,7 +62,7 @@ public class NativeStrip extends Strip {
      * @return 0 or 1
      */
     private int getPwmChannel(int pinNumber) {
-        return (pinNumber == 18 || pinNumber == 12 || pinNumber == 10 || pinNumber == 9 || pinNumber == 21) ? 0 : 1;
+        return (pinNumber == 13 || pinNumber == 19 || pinNumber == 41 || pinNumber == 45 || pinNumber == 53) ? 1 : 0;
     }
 
     /**
@@ -79,31 +73,22 @@ public class NativeStrip extends Strip {
         if (strip == null) return;
         if (isRendering == null) return;
         if (isRendering.get()) return;
-        if (renderCalls == null) return;
         if (previousRender == null) {
             previousRender = new int[getPixelCount()];
             Arrays.fill(previousRender, 0xFF000000);
         }
-        if (renderCalls.get() >= 15) {
-            if (!logged.get()) {
-                log.info("Time taken: {}", System.currentTimeMillis() - timeTakenToReachLimit.get());
-                logged.set(true);
-            }
-            return;
-        }
-        renderCalls.getAndIncrement();
-        if (strip.get() != null) {
+        if (strip != null) {
             boolean changed = false;
             for (int i = 0; i < getPixelCount(); i++) {
                 if (colors[i] != previousRender[i]) {
                     changed = true;
                     val c = new java.awt.Color(colors[i], true);
-                    strip.get().setPixel(i, new Color(c.getRed(), c.getGreen(), c.getBlue()));
+                    strip.setPixel(i, new Color(c.getRed(), c.getGreen(), c.getBlue()));
                 }
             }
             if (previousBrightness != getBrightness()) {
                 changed = true;
-                strip.get().setBrightness(getBrightness());
+                strip.setBrightness(getBrightness());
             }
 
             if (changed) {
@@ -111,7 +96,6 @@ public class NativeStrip extends Strip {
                 previousBrightness = getBrightness();
             }
 
-            strip.get().render();
             isRendering.set(false);
         }
     }

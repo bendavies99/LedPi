@@ -54,9 +54,30 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{15} - %stripansimsg%n</pattern>
         </encoder>
     </appender>
+    <appender name="ROLLING-COLOR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/app-color.log</file>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/archive/app-color-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>15</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%stripansimsg%n</pattern>
+        </encoder>
+    </appender>
     <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
         <maxFlushTime>0</maxFlushTime>
         <appender-ref ref="ROLLING" />
+    </appender>
+    <appender name="ASYNC-COLOR" class="ch.qos.logback.classic.AsyncAppender">
+        <maxFlushTime>0</maxFlushTime>
+        <appender-ref ref="ROLLING-COLOR" />
     </appender>
     <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
         <maxFlushTime>100</maxFlushTime>
@@ -65,7 +86,9 @@
     <logger name="reactor" level="TRACE"/>
     <logger name="reactor.netty" level="INFO"/>
     <logger name="io.netty" level="WARN"/>
-
+    <logger name="ColorLogger" level="INFO">
+        <appender-ref ref="ASYNC-COLOR" />
+    </logger>
     <root level="DEBUG">
         <appender-ref ref="ASYNC_CONSOLE" />
         <appender-ref ref="ASYNC" />

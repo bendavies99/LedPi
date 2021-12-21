@@ -445,6 +445,11 @@ public abstract class Strip implements IStrip
 	public void dispose()
 	{
 		log.debug("Disposing strip: {}", getName());
+		int[] cols = new int[pixelCount];
+		Arrays.fill(cols, 0xFF000000);
+		setColors(cols);
+		off();
+		service.shutdown();
 		if (currentEffect != null)
 		{
 			currentEffect.dispose();
@@ -453,11 +458,6 @@ public abstract class Strip implements IStrip
 		{
 			currentEffectDs.dispose();
 		}
-		int[] cols = new int[pixelCount];
-		Arrays.fill(cols, 0xFF000000);
-		setColors(cols);
-		off();
-		service.shutdown();
 	}
 
 	/**

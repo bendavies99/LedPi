@@ -26,9 +26,7 @@ import sun.misc.Signal;
 
 import java.io.File;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -79,6 +77,7 @@ public class Application implements IApplication
 
 		log.trace("Setting up UDP Server");
 		packetReceiver = new PacketReceiver(config.getNetworkConfig().getReactivePort());
+		packetReceiver.ignorePackets();
 		packetReceiver.subscribeToPackets(cp -> {
 			val strip = strips.stream()
 					.filter(s -> (byte)(s.getUID() & 0xFF) == cp.getStrip())
@@ -153,13 +152,11 @@ public class Application implements IApplication
 				stripServer.dispose();
 			}
 		}, 3500);
-		setTimeout(() -> {
-			System.exit(0);
-		}, 4000);
 		packetReceiver.dispose();
 		strips.forEach(IStrip::dispose);
 //		gcDisposable.dispose();
 		log.info("System will shutdown in 3 seconds...");
+		System.exit(0);
 	}
 
 	/**

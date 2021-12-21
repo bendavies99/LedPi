@@ -15,6 +15,7 @@ import net.bdavies.api.IApplication;
 import net.bdavies.api.effects.IEffect;
 import net.bdavies.fx.basic.Solid;
 import net.bdavies.fx.internal.Connecting;
+import net.bdavies.network.MQTTClient;
 
 /**
  * The connection listener for the MQTT Client this will change the effect on the strip accordingly based on if the
@@ -31,6 +32,7 @@ public class ConnectListener implements IMqttActionListener
     private final MqttConnectOptions options;
     @Getter
     private final IApplication application;
+    private final MQTTClient clientImpl;
     private int connectAttempts = 1;
     private final Map<Integer, IEffect> previousEffects = new HashMap<>();
     private final Map<Integer, Integer> previousBrightnesses = new HashMap<>();
@@ -92,6 +94,10 @@ public class ConnectListener implements IMqttActionListener
     @Override
     public void onFailure(IMqttToken asyncActionToken, Throwable exception)
     {
+        if (clientImpl.isShutdown()){
+            System.exit(0);
+            return;
+        }
         try
         {
             options.setConnectionTimeout(1);
